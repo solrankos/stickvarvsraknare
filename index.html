@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f1e9">
+<title>Stickvarvsräknare</title>
+<style>
+:root{color-scheme:light;--ink:#292820;--muted:#777468;--paper:#f5f1e9;--card:#fffdf8;--line:#e5dfd2;--green:#52765b;--green-dark:#3d6047;--soft:#e8eee5;--red:#a64d43}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+main{width:min(100% - 28px,520px);margin:0 auto;padding:34px 0 48px}
+header{text-align:center;margin-bottom:24px}header .mark{font-size:30px}h1{font-family:Georgia,serif;font-size:clamp(29px,7vw,38px);font-weight:500;margin:5px 0}header p{color:var(--muted);margin:0}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;margin:14px 0;box-shadow:0 5px 20px #4c3c2010}
+.label{font-size:12px;letter-spacing:.11em;font-weight:700;color:var(--muted);text-transform:uppercase}
+.current{text-align:center;background:var(--soft);border:0;padding:25px 18px}
+.number{font-size:clamp(76px,20vw,104px);line-height:1.05;font-weight:650;letter-spacing:-.06em;font-variant-numeric:tabular-nums;margin:8px 0 18px}
+.controls{display:flex;justify-content:center;align-items:center;gap:15px}
+button{font:inherit;border:0;cursor:pointer;touch-action:manipulation}
+.circle{width:54px;height:54px;border-radius:50%;font-size:27px;background:#fff;color:var(--ink);border:1px solid var(--line)}
+.add{background:var(--green);color:white;border-radius:16px;padding:17px 30px;font-size:19px;font-weight:650;min-height:62px;box-shadow:0 4px 0 var(--green-dark)}
+.add:active{transform:translateY(2px);box-shadow:0 2px 0 var(--green-dark)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{border:1px solid var(--line);border-radius:17px;padding:17px 10px;text-align:center}
+.stat strong{display:block;font-size:42px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat small{display:block;color:var(--muted);margin-top:5px}
+.green{color:var(--green-dark)}
+.progress-head{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px;margin:14px 0 8px}
+.track{height:10px;background:#e9e4d9;border-radius:20px;overflow:hidden}.fill{height:100%;width:0;background:var(--green);border-radius:20px;transition:width .2s}
+.notice{display:none;margin-top:14px;background:var(--soft);color:var(--green-dark);padding:12px;border-radius:12px;text-align:center;font-weight:650}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bottom:6px}
+input{width:100%;border:1px solid var(--line);border-radius:12px;background:white;color:var(--ink);font:inherit;padding:12px;min-width:0}
+.actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px}
+.secondary{background:transparent;color:var(--muted);padding:10px 0;text-decoration:underline;text-underline-offset:3px}
+.reset{color:var(--red);font-weight:600}
+footer{text-align:center;color:var(--muted);font-size:12px;margin-top:20px}
+button:focus-visible,input:focus-visible{outline:3px solid #9ab49c;outline-offset:3px}
+@media(max-width:380px){.panel{padding:17px}.settings{grid-template-columns:1fr}.number{font-size:78px}}
+</style>
+</head>
+<body>
+<main>
+<header><div class="mark" aria-hidden="true">🧶</div><h1>Stickvarvsräknare</h1><p>Håll koll på varje varv – och varje intervall.</p></header>
+<section class="panel current" aria-label="Varvräknare">
+  <div class="label">Aktuellt varv</div><div class="number" id="rowCount" aria-live="polite">0</div>
+  <div class="controls"><button class="circle" id="minus" aria-label="Minska ett varv" title="Minska ett varv">−</button><button class="add" id="plus">＋ Räkna varv</button></div>
+  <div class="notice" id="milestone" role="status"></div>
+</section>
+<section class="stats" aria-label="Intervallräknare">
+  <div class="stat"><span class="label">Intervall</span><strong class="green" id="intervalCount">0</strong><small>Avslutade intervall</small></div>
+  <div class="stat"><span class="label">Till nästa</span><strong id="toNext">8</strong><small>Varv kvar</small></div>
+</section>
+<section class="panel"><div class="label">Projektets framsteg</div>
+  <div class="progress-head"><span id="percent">0 % klart</span><span id="remaining">100 varv kvar</span></div>
+  <div class="track" role="progressbar" aria-label="Projektets framsteg" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress"><div class="fill" id="fill"></div></div>
+</section>
+<section class="panel"><div class="label" style="margin-bottom:15px">Inställningar</div>
+  <div class="settings"><div><label for="target">Totalt antal varv</label><input id="target" type="number" min="0" step="1" inputmode="numeric" value="100"></div><div><label for="interval">Räkna intervall var</label><input id="interval" type="number" min="1" step="1" inputmode="numeric" value="8"></div></div>
+  <div class="actions"><button class="secondary" id="undo">Ångra senaste</button><button class="secondary reset" id="reset">Nollställ räknaren</button></div>
+</section>
+<footer>Räknaren sparas automatiskt på den här enheten.</footer>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const defaults = {row:0,target:100,interval:8};
+  let state = {...defaults};
+  try { state = {...state, ...JSON.parse(localStorage.getItem('stickvarvsraknare-v1') || '{}')}; } catch {}
+  const validInt = (v, fallback, min=0) => Number.isFinite(+v) ? Math.max(min, Math.floor(+v)) : fallback;
+  state.row = validInt(state.row,0); state.target = validInt(state.target,100); state.interval = validInt(state.interval,8,1);
+  $('target').value = state.target; $('interval').value = state.interval;
+  function save(){ try{localStorage.setItem('stickvarvsraknare-v1',JSON.stringify(state));}catch{} }
+  function render(){
+    const n=state.interval, row=state.row, total=state.target;
+    const done=Math.floor(row/n), next=n-(row%n), pct=total>0?Math.min(100,Math.round(row/total*100)):0;
+    $('rowCount').textContent=row; $('intervalCount').textContent=done; $('toNext').textContent=next;
+    $('percent').textContent=pct+' % klart'; $('remaining').textContent=Math.max(0,total-row)+' varv kvar';
+    $('fill').style.width=pct+'%'; $('progress').setAttribute('aria-valuenow',pct);
+    $('minus').disabled=row===0; $('minus').style.opacity=row===0?'.4':'1';
+    const notice=$('milestone');
+    if(row>0 && row%n===0){notice.style.display='block';notice.textContent='✓ '+n+' varv till – intervall '+done+' klart!';} else notice.style.display='none';
+    save();
+  }
+  $('plus').addEventListener('click',()=>{state.row++;render();});
+  $('minus').addEventListener('click',()=>{state.row=Math.max(0,state.row-1);render();});
+  $('undo').addEventListener('click',()=>{state.row=Math.max(0,state.row-1);render();});
+  $('reset').addEventListener('click',()=>{if(confirm('Vill du nollställa varvräknaren?')){state.row=0;render();}});
+  $('target').addEventListener('change',e=>{state.target=validInt(e.target.value,100);e.target.value=state.target;render();});
+  $('interval').addEventListener('change',e=>{state.interval=validInt(e.target.value,8,1);e.target.value=state.interval;render();});
+  render();
+})();
+</script>
+</body>
+</html>
